@@ -4,6 +4,20 @@ a One-stop SAFE deployment portal with Hyperlane
 
 ![top](./docs/top.png)
 
+## Submission
+
+### Live App
+
+https://interchain-safe-portal.vercel.app/
+
+### Pitch Deck
+
+https://docs.google.com/presentation/d/168juHv1bIAsz5gmniO9YCZgkpLX7ZKSwFyMM62HlKFE/edit?usp=sharing
+
+### Demo
+
+TBD
+
 ## Overview
 
 Interchain SAFE Portal is a one-stop SAFE deployment portal built with Hyperlane

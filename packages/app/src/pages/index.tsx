@@ -91,6 +91,10 @@ const IssuePage: NextPage = () => {
               <FormLabel>Owner</FormLabel>
               <Input disabled value={connected.signerAddress} fontSize="xs" />
             </FormControl>
+            <FormControl>
+              <FormLabel>Threshold</FormLabel>
+              <Input disabled value={"1"} fontSize="xs" />
+            </FormControl>
             <Button
               w="full"
               isLoading={isProcessing}
