@@ -1,2 +1,3 @@
-# interchain-abstract-wallet
-This is Account Abstraction Wallet with interchain API
+# Interchain Safe Portal
+
+This is a multichain Safe portal built with Hyperlane
