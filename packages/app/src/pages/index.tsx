@@ -1,216 +1,198 @@
-import {
-  Button,
-  FormControl,
-  FormLabel,
-  HStack,
-  Input,
-  Link,
-  Select,
-  Stack,
-  Text,
-  useDisclosure,
-} from "@chakra-ui/react";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { SafeFactory } from "@safe-global/safe-core-sdk";
-import EthersAdapter from "@safe-global/safe-ethers-lib";
-import crypto from "crypto";
-import { ethers } from "ethers";
+import { Button, FormControl, FormLabel, HStack, Image, Input, Stack, Text, useDisclosure } from "@chakra-ui/react";
+import { useSDK } from "@thirdweb-dev/react/solana";
+// import { useSDK } from "@thirdweb-dev/react";
 import { NextPage } from "next";
-import { useMemo, useState } from "react";
-import QRCode from "react-qr-code";
+import { useState } from "react";
 
 import { Layout } from "@/components/Layout";
 import { Modal } from "@/components/Modal";
 import { Unit } from "@/components/Unit";
-import { useConnected } from "@/hooks/useConnected";
 import { useErrorHandler } from "@/hooks/useErrorHandler";
 
-import {
-  HYPERLANE_EXPROLER_URI_BASE,
-  SAFE_CALLBACK_HANDLER,
-  SAFE_FACTORY_ADDRESS,
-  SAFE_IMPLEMENTATION_ADDRESS,
-} from "../../../contracts/config";
-import networkJsonFile from "../../../contracts/network.json";
-import { ChainId } from "../../../contracts/types/network";
-import configJsonFile from "../../config.json";
+import configFileJson from "../../config.json";
 
-const IssuePage: NextPage = () => {
-  const { connected } = useConnected();
-  const { openConnectModal } = useConnectModal();
-  const confirmModalDisclosure = useDisclosure();
+export interface Creator {
+  address: string;
+  share: number;
+}
 
-  const [destinationChainId, setDestinationChainId] = useState<ChainId>();
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [predictedAddress, setPredictedAddress] = useState("");
-  const [txHash, setTxHash] = useState("");
+export interface Metadata {
+  image: string;
+  name: string;
+  symbol: string;
+}
+
+const HomePage: NextPage = () => {
+  const [contractAddress, setContractAddress] = useState("9pndRKmnm4w1VrVuayN6ZYKvC6oex6riyU9i2KRht6HW");
+  const [tokenId, setTokenId] = useState("3AZdsgg2cx5DL5SBTLPg3ToB8CBKVTrSuPBySKW78fx6");
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [metadata, setMetadata] = useState<Metadata>();
+  const [share, setShare] = useState(20);
+  const [userAddress, setUserAddress] = useState("");
+  const [result, setResult] = useState("");
+
+  const modalDisclosure = useDisclosure();
+
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+  const [isProcessingTx, setIsProcessingTx] = useState(false);
+
+  const sdk = useSDK();
 
   const { handle } = useErrorHandler();
 
   const clear = () => {
-    confirmModalDisclosure.onClose();
-    setIsProcessing(false);
-    setPredictedAddress("");
-    setTxHash("");
+    modalDisclosure.onClose();
+    setIsLoadingPreview(false);
+    setIsProcessingTx(false);
+    setCreators([]);
+    setMetadata(undefined);
+    setResult("");
   };
-
-  const filteredDestinationNetwork = useMemo(() => {
-    if (!connected) {
-      return [];
-    }
-    return Object.entries(networkJsonFile).filter(([chainId]) => chainId !== connected.chainId);
-  }, [connected]);
 
   return (
     <Layout>
-      <Unit header="Deploy SAFE with Hyperlane">
-        {!connected && (
-          <Button w="full" onClick={openConnectModal}>
-            Connect Wallet
-          </Button>
-        )}
-        {connected && (
-          <Stack>
-            <FormControl>
-              <FormLabel>Source Chain</FormLabel>
-              <Input disabled value={connected.networkConfig.name} fontSize="sm" />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Destination Chain</FormLabel>
-              <Select fontSize="sm" onChange={(e) => setDestinationChainId(e.target.value as ChainId)}>
-                {filteredDestinationNetwork.map(([chainId, { name }]) => {
-                  return (
-                    <option key={chainId} value={chainId}>
-                      {name}
-                    </option>
-                  );
-                })}
-              </Select>
-            </FormControl>
-            <FormControl>
-              <FormLabel>Owner</FormLabel>
-              <Input disabled value={connected.signerAddress} fontSize="xs" />
-            </FormControl>
-            <FormControl>
-              <FormLabel>Threshold</FormLabel>
-              <Input disabled value={"1"} fontSize="xs" />
-            </FormControl>
-            <Button
-              w="full"
-              isLoading={isProcessing}
-              onClick={async () => {
-                try {
-                  setIsProcessing(true);
-                  let _destinationChainId: ChainId;
-                  let destinationDomainId;
-                  if (!destinationChainId) {
-                    destinationDomainId = filteredDestinationNetwork[0][1].domainId;
-                    _destinationChainId = filteredDestinationNetwork[0][0] as ChainId;
-                  } else {
-                    destinationDomainId = networkJsonFile[destinationChainId].domainId;
-                    _destinationChainId = destinationChainId;
-                  }
-                  const safeAccountConfig = {
-                    owners: ["0x29893eEFF38C5D5A1B2F693e2d918e618CCFfdD8"],
-                    threshold: 1,
-                  };
-                  const safeDeploymentConfig = {
-                    saltNonce: `0x${crypto.randomBytes(32).toString("hex")}`,
-                  };
-                  const initializer = connected.gnosisSafe.interface.encodeFunctionData("setup", [
-                    safeAccountConfig.owners,
-                    safeAccountConfig.threshold,
-                    ethers.constants.AddressZero,
-                    "0x",
-                    SAFE_CALLBACK_HANDLER,
-                    ethers.constants.AddressZero,
-                    0,
-                    ethers.constants.AddressZero,
-                  ]);
-                  const data = connected.gnosisSafeProxyFactory.interface.encodeFunctionData("createProxyWithNonce", [
-                    SAFE_IMPLEMENTATION_ADDRESS,
-                    initializer,
-                    safeDeploymentConfig.saltNonce,
-                  ]);
-                  const provider = new ethers.providers.JsonRpcProvider(networkJsonFile[_destinationChainId].rpc);
-                  const ethAdapter = new EthersAdapter({
-                    ethers,
-                    signerOrProvider: provider,
-                  });
-                  const safeFactory = await SafeFactory.create({ ethAdapter });
-                  const predictedAddress = await safeFactory.predictSafeAddress({
-                    safeAccountConfig,
-                    safeDeploymentConfig,
-                  });
-                  console.log(predictedAddress);
-                  // await safeFactory.deploySafe({ safeAccountConfig, safeDeploymentConfig });
-                  setPredictedAddress(predictedAddress);
-                  const tx = await connected.interchainAccountRouter.dispatch(
-                    destinationDomainId,
-                    SAFE_FACTORY_ADDRESS,
-                    data
-                  );
-                  setTxHash(`${tx.hash}`);
-                  confirmModalDisclosure.onOpen();
-                } catch (e) {
-                  handle(e);
-                } finally {
-                  setIsProcessing(false);
+      <Unit header="Create NFT Fundible Copy">
+        <Stack>
+          <FormControl>
+            <FormLabel color={configFileJson.style.color.black.text.secondary}>Contract Address</FormLabel>
+            <Input fontSize="xs" value={contractAddress} onChange={(e) => setContractAddress(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel color={configFileJson.style.color.black.text.secondary}>Token ID</FormLabel>
+            <Input fontSize="xs" value={tokenId} onChange={(e) => setTokenId(e.target.value)} />
+          </FormControl>
+          <FormControl>
+            <FormLabel color={configFileJson.style.color.black.text.secondary}>Your Share (%)</FormLabel>
+            <Input fontSize="xs" value={share} onChange={(e) => setShare(Number(e.target.value))} />
+          </FormControl>
+          <Button
+            w="full"
+            disabled={!sdk}
+            isLoading={isLoadingPreview}
+            onClick={async () => {
+              try {
+                if (!sdk) {
+                  return;
                 }
-              }}
-            >
-              Deploy
-            </Button>
-            <Modal header="Deployment Detail" onClose={clear} isOpen={confirmModalDisclosure.isOpen}>
+                setIsLoadingPreview(true);
+                console.log("contractAddress", contractAddress);
+                const program = await sdk.getProgram(contractAddress, "nft-collection");
+
+                const userAddress = sdk.wallet.getAddress();
+                if (!userAddress) {
+                  throw new Error("User address not defined");
+                }
+                console.log("userAddress", userAddress);
+                setUserAddress(userAddress);
+
+                const holder = await program.ownerOf(tokenId);
+                console.log("token holder", holder);
+
+                if (holder !== userAddress) {
+                  throw new Error("You don't own the NFT");
+                }
+
+                console.log("Checked you own the NFT...");
+
+                const metadata = await program.getMetadata();
+                if (!metadata) {
+                  throw new Error("Metadata not defined in original NFT");
+                }
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                setMetadata(metadata as any);
+
+                console.log("Fetched NFT metadata...");
+
+                const creators = await program.getCreators();
+                if (creators.length > 1) {
+                  throw new Error("Multiple creator is not supported yet");
+                }
+                setCreators(creators);
+                console.log("Fetched NFT creators...");
+                modalDisclosure.onOpen();
+              } catch (e) {
+                handle(e);
+              } finally {
+                setIsLoadingPreview(false);
+              }
+            }}
+          >
+            Preview
+          </Button>
+          <Modal header="Preview" isOpen={modalDisclosure.isOpen} onClose={clear}>
+            {sdk && metadata && creators.length > 0 && (
               <Stack spacing="4">
-                <Stack spacing="1">
-                  <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
-                    Track Tx on Hyperlane
-                  </Text>
-                  <Text fontSize="xs">
-                    <Link
-                      href={`${HYPERLANE_EXPROLER_URI_BASE}/?search=${txHash}`}
-                      color={configJsonFile.style.color.link}
-                      target="_blank"
-                    >
-                      {`${HYPERLANE_EXPROLER_URI_BASE}/?search=${txHash}`}
-                    </Link>
-                  </Text>
+                <Stack>
+                  <Stack spacing="1">
+                    <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
+                      Name
+                    </Text>
+                    <Text fontSize="sm" color={configFileJson.style.color.black.text.secondary}>
+                      {metadata.name}
+                    </Text>
+                  </Stack>
+                  <Stack spacing="1">
+                    <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
+                      Symbol
+                    </Text>
+                    <Text fontSize="sm" color={configFileJson.style.color.black.text.secondary}>
+                      {metadata.symbol}
+                    </Text>
+                  </Stack>
+                  <Stack spacing="1">
+                    <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
+                      Image
+                    </Text>
+                    <HStack justify={"center"}>
+                      <Image src={metadata.image} alt={"image"} w="40" />
+                    </HStack>
+                  </Stack>
                 </Stack>
-                <Stack spacing="1">
-                  <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
-                    Predicted SAFE Address
+                <Stack>
+                  <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
+                    Royalty Share
                   </Text>
-                  <Text fontSize="xs">{predictedAddress}</Text>
+                  <Stack spacing="1">
+                    <Text fontSize="x-small">Share: {creators[0].share - share} %</Text>
+                    <Text fontSize="x-small">Address: {creators[0].address}</Text>
+                  </Stack>
+                  <Stack spacing="1">
+                    <Text fontSize="x-small">Share: {share} %</Text>
+                    <Text fontSize="x-small">Address: {userAddress}</Text>
+                  </Stack>
                 </Stack>
-                <Stack spacing="1">
-                  <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
-                    Import to{" "}
-                    <Link
-                      href={"https://gnosis-safe.io/app/load"}
-                      color={configJsonFile.style.color.link}
-                      target="_blank"
-                    >
-                      SAFE App
-                    </Link>
-                  </Text>
-                  <Text fontSize="x-small" color={configJsonFile.style.color.black.text.tertiary}>
-                    * Testnet SAFE App is only available in Georli
-                  </Text>
-                  <Text fontSize="x-small" color={configJsonFile.style.color.black.text.tertiary}>
-                    * Please check relay status in Hyperlane exproler before importing
-                  </Text>
-                  <HStack justify={"center"} py="4">
-                    <QRCode value={predictedAddress} />
-                  </HStack>
-                </Stack>
+                <Button
+                  w="full"
+                  isLoading={isProcessingTx}
+                  onClick={async () => {
+                    try {
+                      setIsProcessingTx(true);
+                      const result = await sdk.deployer.createNftCollection({
+                        ...metadata,
+                        name: `Copy of ${metadata.name}`,
+                        creators: [
+                          { address: creators[0].address, share: creators[0].share - share },
+                          { address: userAddress, share },
+                        ],
+                      });
+                      console.log(result);
+                      setResult(result);
+                    } catch (e) {
+                      handle(e);
+                    } finally {
+                      setIsProcessingTx(false);
+                    }
+                  }}
+                >
+                  Create Fungible Copy
+                </Button>
               </Stack>
-            </Modal>
-          </Stack>
-        )}
+            )}
+          </Modal>
+        </Stack>
       </Unit>
     </Layout>
   );
 };
 
-export default IssuePage;
+export default HomePage;

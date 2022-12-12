@@ -1,10 +1,10 @@
 {
-  "name": "interchain-safe-portal",
-  "description": "interchain-safe-portal for Privacy-Preserved Onchain Identity",
+  "name": "NFT Fungible Printer",
+  "description": "NFT Fungible Printer for Privacy-Preserved Onchain Identity",
   "url": {
-    "app": "https://zk-sbt-five.vercel.app",
-    "docs": "https://github.com/taijusanagi/interchain-safe-portal/blob/main/README.md",
-    "github": "https://github.com/taijusanagi/interchain-safe-portal"
+    "app": "https://nft-fungible-printer.vercel.app",
+    "docs": "https://github.com/taijusanagi/nft-fungible-printer/blob/main/README.md",
+    "github": "https://github.com/taijusanagi/nft-fungible-printer"
   },
   "style": {
     "color": {
@@ -24,19 +24,19 @@
           "tertiary": "gray.400"
         }
       },
-      "accent": "#3960C6",
+      "accent": "#F6F7F8",
       "link": "#3960C6",
       "brand": {
-        "50": "#EBEFF9",
-        "100": "#C8D3EF",
-        "200": "#A4B6E5",
-        "300": "#8099DA",
-        "400": "#5D7DD0",
-        "500": "#3960C6",
-        "600": "#2E4D9E",
-        "700": "#223A77",
-        "800": "#17264F",
-        "900": "#0B1328"
+        "50": "#EEEBFA",
+        "100": "#D0C7F0",
+        "200": "#B2A3E6",
+        "300": "#947FDC",
+        "400": "#765BD2",
+        "500": "#5837C8",
+        "600": "#472CA0",
+        "700": "#352178",
+        "800": "#231650",
+        "900": "#120B28"
       }
     },
     "size": "md",

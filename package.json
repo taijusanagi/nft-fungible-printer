@@ -1,5 +1,5 @@
 {
-  "name": "interchain-safe-portal",
+  "name": "nft-fungible-printer",
   "version": "0.0.1",
   "license": "MIT",
   "private": true,
@@ -10,18 +10,12 @@
   },
   "scripts": {
     "prepare": "husky install",
-    "predev": "yarn prebuild",
     "dev": "run-p dev:*",
-    "dev:app": "yarn workspace @interchain-safe-portal/app dev",
-    "prebuild": "run-p prebuild:*",
-    "prebuild:contracts": "yarn workspace @interchain-safe-portal/contracts build",
+    "dev:app": "yarn workspace @nft-fungible-printer/app dev",
     "build": "run-p build:*",
-    "build:app": "yarn workspace @interchain-safe-portal/app build",
-    "test": "run-p test:*",
-    "test:contracts": "yarn workspace @interchain-safe-portal/contracts test",
+    "build:app": "yarn workspace @nft-fungible-printer/app build",
     "lint": "run-p lint:*",
-    "lint:app": "yarn workspace @interchain-safe-portal/app lint",
-    "lint:contracts": "yarn workspace @interchain-safe-portal/contracts lint"
+    "lint:app": "yarn workspace @nft-fungible-printer/app lint"
   },
   "devDependencies": {
     "@commitlint/cli": "^17.1.2",

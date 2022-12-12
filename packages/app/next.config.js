@@ -1,7 +1,9 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-  swcMinify: true,
-  experimental: {
-    externalDir: true,
+const nextConfig = {
+  env: {
+    NFT_CONTRACT_ADDRESS: process.env.NFT_CONTRACT_ADDRESS,
   },
+  reactStrictMode: true,
 };
+
+module.exports = nextConfig;

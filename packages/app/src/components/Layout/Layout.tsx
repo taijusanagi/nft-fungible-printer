@@ -1,8 +1,9 @@
 import { Box, Container, Flex, HStack, Icon, Image, Link, Text, VStack } from "@chakra-ui/react";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { FaGithub } from "react-icons/fa";
 
 import { Head } from "@/components/Head";
+import { useIsMounted } from "@/hooks/useIsMounted";
 
 import configJsonFile from "../../../config.json";
 
@@ -11,8 +12,9 @@ export interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const { isMounted } = useIsMounted();
   return (
-    <Flex minHeight={"100vh"} direction={"column"} bgGradient="linear(to-b, orange.100, blue.100)">
+    <Flex minHeight={"100vh"} direction={"column"} bgGradient="linear(to-b, gray.800, purple.800)">
       <Head />
       <Container as="section" maxW="8xl">
         <Box as="nav" py="4">
@@ -20,16 +22,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <Link href="/">
               <Image src={"/assets/icon.png"} alt="logo" h="8" />
             </Link>
-            <HStack spacing="4">
-              <ConnectButton accountStatus={"address"} showBalance={false} chainStatus={"icon"} />
-            </HStack>
+            <HStack spacing="4">{isMounted && <WalletMultiButton />}</HStack>
           </HStack>
         </Box>
       </Container>
       <VStack py="6" spacing={"4"}>
         <Image src={"/assets/icon.png"} w="24" alt="hero" />
         <Text color={configJsonFile.style.color.accent} fontWeight={"bold"} fontSize="xl">
-          Interchain SAFE Portal
+          NFT Fungible Printer
         </Text>
       </VStack>
       <Container maxW="lg" flex={1}>

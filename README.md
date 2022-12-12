@@ -1,18 +1,17 @@
-# Interchain Safe Portal
+# NFT Fungible Printer
 
-a One-stop SAFE deployment portal with Hyperlane
-
-![top](./docs/top.png)
+NFT holders can create an NFT drop against the original NFT.
+The copied NFT drop royalty is back to the original ERC721 NFT creator.
 
 ## Submission
 
 ### Live App
 
-https://interchain-safe-portal.vercel.app/
+TBD
 
 ### Pitch Deck
 
-https://docs.google.com/presentation/d/168juHv1bIAsz5gmniO9YCZgkpLX7ZKSwFyMM62HlKFE/edit?usp=sharing
+TBD
 
 ### Demo
 
@@ -20,12 +19,8 @@ TBD
 
 ## Overview
 
-Interchain SAFE Portal is a one-stop SAFE deployment portal built with Hyperlane
-
-Users can choose a destination chain and make SAFE deployment tx from any chain which is supported by Hyperlane
-
-Deployed SAFE can be imported to the SAFE app.
+TBD
 
 ## How it works
 
-![how-it-works](./docs/how-it-works.png)
+TBD
