@@ -12,9 +12,6 @@ const supportedChains: Chain[] = Object.entries(networkJsonFile)
       return true;
     }
   })
-  .sort(([, a], [, b]) => {
-    return a.index - b.index;
-  })
   .map(([chainId, network]) => {
     return {
       id: Number(chainId),
@@ -43,7 +40,7 @@ export interface RainbowWeb3AuthConnectorProps {
 }
 
 const { connectors } = getDefaultWallets({
-  appName: "ShinkaWallet",
+  appName: "InterchainSAFEPortal",
   chains,
 });
 

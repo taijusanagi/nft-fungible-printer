@@ -12,7 +12,7 @@ export interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
-    <Flex minHeight={"100vh"} direction={"column"} bgGradient="linear(to-b, red.100, blue.100)">
+    <Flex minHeight={"100vh"} direction={"column"} bgGradient="linear(to-b, orange.100, blue.100)">
       <Head />
       <Container as="section" maxW="8xl">
         <Box as="nav" py="4">
@@ -26,8 +26,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           </HStack>
         </Box>
       </Container>
-      <VStack py="8" spacing={"4"}>
-        <Image src={"/assets/icon.png"} w="24" />
+      <VStack py="6" spacing={"4"}>
+        <Image src={"/assets/icon.png"} w="24" alt="hero" />
         <Text color={configJsonFile.style.color.accent} fontWeight={"bold"} fontSize="xl">
           Interchain SAFE Portal
         </Text>

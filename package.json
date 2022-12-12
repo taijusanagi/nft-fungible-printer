@@ -13,7 +13,6 @@
     "predev": "yarn prebuild",
     "dev": "run-p dev:*",
     "dev:app": "yarn workspace @interchain-safe-portal/app dev",
-    "dev:contracts": "yarn workspace @interchain-safe-portal/contracts dev",
     "prebuild": "run-p prebuild:*",
     "prebuild:contracts": "yarn workspace @interchain-safe-portal/contracts build",
     "build": "run-p build:*",
