@@ -198,9 +198,9 @@ const HomePage: NextPage = () => {
                           setStep(0);
                           setIsProcessing(true);
                           const createdCollection = await sdk.deployer.createNftCollection({
-                            ...metadata,
                             name: `Fungible Copy of ${metadata.name}`,
-                            symbol: `FC`,
+                            symbol: "FC",
+                            image: metadata.image,
                             creators: [
                               { address: creators[0].address, share: creators[0].share - share },
                               { address: userAddress, share },
@@ -221,6 +221,7 @@ const HomePage: NextPage = () => {
                           setStep(2);
                           setIsProcessing(true);
                           await program.mintAdditionalSupply(nftAddress, amount);
+                          setStep(3);
                           setIsProcessing(false);
                           console.log("done");
                         } catch (e) {
