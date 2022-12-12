@@ -28,8 +28,9 @@ const HomePage: NextPage = () => {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [metadata, setMetadata] = useState<Metadata>();
   const [share, setShare] = useState(20);
+  const [amount, setAmount] = useState(100);
   const [userAddress, setUserAddress] = useState("");
-  const [result, setResult] = useState("");
+  const [deployedAddress, setDeployedAddress] = useState("");
 
   const modalDisclosure = useDisclosure();
 
@@ -46,7 +47,7 @@ const HomePage: NextPage = () => {
     setIsProcessingTx(false);
     setCreators([]);
     setMetadata(undefined);
-    setResult("");
+    setDeployedAddress("");
   };
 
   return (
@@ -64,6 +65,10 @@ const HomePage: NextPage = () => {
           <FormControl>
             <FormLabel color={configFileJson.style.color.black.text.secondary}>Your Share (%)</FormLabel>
             <Input fontSize="xs" value={share} onChange={(e) => setShare(Number(e.target.value))} />
+          </FormControl>
+          <FormControl>
+            <FormLabel color={configFileJson.style.color.black.text.secondary}>Amount</FormLabel>
+            <Input fontSize="xs" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
           </FormControl>
           <Button
             w="full"
@@ -85,30 +90,25 @@ const HomePage: NextPage = () => {
                 console.log("userAddress", userAddress);
                 setUserAddress(userAddress);
 
-                const holder = await program.ownerOf(tokenId);
-                console.log("token holder", holder);
-
-                if (holder !== userAddress) {
-                  throw new Error("You don't own the NFT");
-                }
-
-                console.log("Checked you own the NFT...");
-
-                const metadata = await program.getMetadata();
+                const { owner, metadata } = await program.get(tokenId);
                 if (!metadata) {
                   throw new Error("Metadata not defined in original NFT");
                 }
+                if (owner !== userAddress) {
+                  throw new Error("You don't own the NFT");
+                }
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setMetadata(metadata as any);
-
-                console.log("Fetched NFT metadata...");
+                console.log("Fetched NFT metadata", metadata);
 
                 const creators = await program.getCreators();
                 if (creators.length > 1) {
                   throw new Error("Multiple creator is not supported yet");
                 }
                 setCreators(creators);
-                console.log("Fetched NFT creators...");
+                console.log("Fetched NFT creators", creators);
+
+                console.log("Open modal");
                 modalDisclosure.onOpen();
               } catch (e) {
                 handle(e);
@@ -133,14 +133,6 @@ const HomePage: NextPage = () => {
                   </Stack>
                   <Stack spacing="1">
                     <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
-                      Symbol
-                    </Text>
-                    <Text fontSize="sm" color={configFileJson.style.color.black.text.secondary}>
-                      {metadata.symbol}
-                    </Text>
-                  </Stack>
-                  <Stack spacing="1">
-                    <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
                       Image
                     </Text>
                     <HStack justify={"center"}>
@@ -161,22 +153,34 @@ const HomePage: NextPage = () => {
                     <Text fontSize="x-small">Address: {userAddress}</Text>
                   </Stack>
                 </Stack>
+                <Stack spacing="1">
+                  <Text fontSize="sm" fontWeight={"bold"} color={configFileJson.style.color.black.text.secondary}>
+                    Amount
+                  </Text>
+                  <Text fontSize="sm" color={configFileJson.style.color.black.text.secondary}>
+                    {amount}
+                  </Text>
+                </Stack>
                 <Button
                   w="full"
                   isLoading={isProcessingTx}
                   onClick={async () => {
                     try {
                       setIsProcessingTx(true);
-                      const result = await sdk.deployer.createNftCollection({
+                      const deployedAddress = await sdk.deployer.createNftCollection({
                         ...metadata,
-                        name: `Copy of ${metadata.name}`,
+                        name: `Fungible Copy of ${metadata.name}`,
+                        symbol: `FC`,
                         creators: [
                           { address: creators[0].address, share: creators[0].share - share },
                           { address: userAddress, share },
                         ],
                       });
-                      console.log(result);
-                      setResult(result);
+                      console.log(deployedAddress);
+                      setDeployedAddress(deployedAddress);
+                      const program = await sdk.getProgram(deployedAddress, "nft-collection");
+                      const nftAddress = await program.mint({ ...metadata, name: `Fungible Copy of ${metadata.name}` });
+                      await program.mintAdditionalSupply(nftAddress, 10);
                     } catch (e) {
                       handle(e);
                     } finally {
