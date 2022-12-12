@@ -1,9 +1,23 @@
-import { Button, FormControl, FormLabel, Input, Link, Select, Stack, Text, useDisclosure } from "@chakra-ui/react";
+import {
+  Button,
+  FormControl,
+  FormLabel,
+  HStack,
+  Input,
+  Link,
+  Select,
+  Stack,
+  Text,
+  useDisclosure,
+} from "@chakra-ui/react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { SafeFactory } from "@safe-global/safe-core-sdk";
+import EthersAdapter from "@safe-global/safe-ethers-lib";
 import crypto from "crypto";
 import { ethers } from "ethers";
 import { NextPage } from "next";
 import { useMemo, useState } from "react";
+import QRCode from "react-qr-code";
 
 import { Layout } from "@/components/Layout";
 import { Modal } from "@/components/Modal";
@@ -13,6 +27,7 @@ import { useErrorHandler } from "@/hooks/useErrorHandler";
 
 import {
   HYPERLANE_EXPROLER_URI_BASE,
+  SAFE_CALLBACK_HANDLER,
   SAFE_FACTORY_ADDRESS,
   SAFE_IMPLEMENTATION_ADDRESS,
 } from "../../../contracts/config";
@@ -27,6 +42,7 @@ const IssuePage: NextPage = () => {
 
   const [destinationChainId, setDestinationChainId] = useState<ChainId>();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [predictedAddress, setPredictedAddress] = useState("");
   const [txHash, setTxHash] = useState("");
 
   const { handle } = useErrorHandler();
@@ -34,6 +50,7 @@ const IssuePage: NextPage = () => {
   const clear = () => {
     confirmModalDisclosure.onClose();
     setIsProcessing(false);
+    setPredictedAddress("");
     setTxHash("");
   };
 
@@ -80,28 +97,50 @@ const IssuePage: NextPage = () => {
               onClick={async () => {
                 try {
                   setIsProcessing(true);
+                  let _destinationChainId: ChainId;
                   let destinationDomainId;
                   if (!destinationChainId) {
                     destinationDomainId = filteredDestinationNetwork[0][1].domainId;
+                    _destinationChainId = filteredDestinationNetwork[0][0] as ChainId;
                   } else {
                     destinationDomainId = networkJsonFile[destinationChainId].domainId;
+                    _destinationChainId = destinationChainId;
                   }
+                  const safeAccountConfig = {
+                    owners: ["0x29893eEFF38C5D5A1B2F693e2d918e618CCFfdD8"],
+                    threshold: 1,
+                  };
+                  const safeDeploymentConfig = {
+                    saltNonce: `0x${crypto.randomBytes(32).toString("hex")}`,
+                  };
                   const initializer = connected.gnosisSafe.interface.encodeFunctionData("setup", [
-                    [connected.signerAddress],
-                    1,
+                    safeAccountConfig.owners,
+                    safeAccountConfig.threshold,
                     ethers.constants.AddressZero,
                     "0x",
-                    ethers.constants.AddressZero,
+                    SAFE_CALLBACK_HANDLER,
                     ethers.constants.AddressZero,
                     0,
                     ethers.constants.AddressZero,
                   ]);
-                  const nonce = crypto.randomBytes(32); // just rondom bytes to avoid conflict
                   const data = connected.gnosisSafeProxyFactory.interface.encodeFunctionData("createProxyWithNonce", [
                     SAFE_IMPLEMENTATION_ADDRESS,
                     initializer,
-                    nonce,
+                    safeDeploymentConfig.saltNonce,
                   ]);
+                  const provider = new ethers.providers.JsonRpcProvider(networkJsonFile[_destinationChainId].rpc);
+                  const ethAdapter = new EthersAdapter({
+                    ethers,
+                    signerOrProvider: provider,
+                  });
+                  const safeFactory = await SafeFactory.create({ ethAdapter });
+                  const predictedAddress = await safeFactory.predictSafeAddress({
+                    safeAccountConfig,
+                    safeDeploymentConfig,
+                  });
+                  console.log(predictedAddress);
+                  // await safeFactory.deploySafe({ safeAccountConfig, safeDeploymentConfig });
+                  setPredictedAddress(predictedAddress);
                   const tx = await connected.interchainAccountRouter.dispatch(
                     destinationDomainId,
                     SAFE_FACTORY_ADDRESS,
@@ -122,23 +161,9 @@ const IssuePage: NextPage = () => {
               <Stack spacing="4">
                 <Stack spacing="1">
                   <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
-                    Track Tx on Exproler
-                  </Text>
-                  <Text fontSize="sm">
-                    <Link
-                      href={`${connected.networkConfig.explorer.url}/tx/${txHash}`}
-                      color={configJsonFile.style.color.link}
-                      target="_blank"
-                    >
-                      {`${connected.networkConfig.explorer.url}/tx/${txHash}`}
-                    </Link>
-                  </Text>
-                </Stack>
-                <Stack spacing="1">
-                  <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
                     Track Tx on Hyperlane
                   </Text>
-                  <Text fontSize="sm">
+                  <Text fontSize="xs">
                     <Link
                       href={`${HYPERLANE_EXPROLER_URI_BASE}/?search=${txHash}`}
                       color={configJsonFile.style.color.link}
@@ -147,6 +172,33 @@ const IssuePage: NextPage = () => {
                       {`${HYPERLANE_EXPROLER_URI_BASE}/?search=${txHash}`}
                     </Link>
                   </Text>
+                </Stack>
+                <Stack spacing="1">
+                  <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
+                    Predicted Address
+                  </Text>
+                  <Text fontSize="xs">{predictedAddress}</Text>
+                </Stack>
+                <Stack spacing="1">
+                  <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
+                    Import to{" "}
+                    <Link
+                      href={"https://gnosis-safe.io/app/load"}
+                      color={configJsonFile.style.color.link}
+                      target="_blank"
+                    >
+                      SAFE App
+                    </Link>
+                  </Text>
+                  <Text fontSize="x-small" color={configJsonFile.style.color.black.text.tertiary}>
+                    * Testnet SAFE App is only available in Georli
+                  </Text>
+                  <Text fontSize="x-small" color={configJsonFile.style.color.black.text.tertiary}>
+                    * Please check relay status in Hyperlane exproler before importing
+                  </Text>
+                  <HStack justify={"center"} py="4">
+                    <QRCode value={predictedAddress} />
+                  </HStack>
                 </Stack>
               </Stack>
             </Modal>

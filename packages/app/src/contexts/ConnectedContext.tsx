@@ -59,6 +59,7 @@ export const ConnectedContextProvider: React.FC<ConnectedContextProviderProps> =
       const interchainAccountRouter = IInterchainAccountRouter__factory.connect(ICA_ROUTER_ADDRESS, signer);
       const gnosisSafeProxyFactory = IGnosisSafeProxyFactory__factory.connect(SAFE_FACTORY_ADDRESS, signer);
       const gnosisSafe = IGnosisSafe__factory.connect(SAFE_IMPLEMENTATION_ADDRESS, signer);
+
       setConnected({
         chainId,
         provider,
