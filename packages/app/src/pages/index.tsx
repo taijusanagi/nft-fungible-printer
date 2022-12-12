@@ -179,7 +179,7 @@ const IssuePage: NextPage = () => {
                 </Stack>
                 <Stack spacing="1">
                   <Text fontSize="sm" fontWeight={"bold"} color={configJsonFile.style.color.black.text.secondary}>
-                    Predicted Address
+                    Predicted SAFE Address
                   </Text>
                   <Text fontSize="xs">{predictedAddress}</Text>
                 </Stack>
