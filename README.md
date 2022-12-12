@@ -1,15 +1,19 @@
 # NFT Fungible Printer
 
-NFT holders can create an NFT drop against the original NFT.
-The copied NFT drop royalty is back to the original ERC721 NFT creator.
+NFT royalty with the new distribution model.
 
 ![top](./docs/top.png)
+
+## Overview
+
+NFT holders can create fungible copies against the original NFT.
+And the copied NFT inherits the original NFT's royalty and creator info. With NFT Fungible Printer, The holder can be a distributor of the NFTs, and it brings a new creator & ownership economy to the NFT space.
 
 ## Submission
 
 ### Live App
 
-TBD
+https://nft-fungible-printer.vercel.app/
 
 ### Pitch Deck
 
@@ -42,6 +46,10 @@ TBD
 ### Thirdweb
 
 We are using Thirdweb Solana SDK for rapid development
+
+### Architecture
+
+![architecture](./docs/architecture.png)
 
 ### Diagram
 
